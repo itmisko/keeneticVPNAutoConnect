@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  ============================================================================
+  ШАБЛОН профиля iOS IKEv2 VPN, авто-подключение вне дома.
+  Это XML-комментарий: iOS его игнорирует, на настройки НЕ влияет.
+  Файл БЕЗ реальных данных. Замените плейсхолдеры {{...}} и сгенерируйте UUID.
+  ============================================================================
+  ЧТО НУЖНО ЗАМЕНИТЬ (плейсхолдеры вида {{КЛЮЧ}}):
+   {{DDNS_HOST}}     — своя A-запись → WAN-IP роутера (пример: home.domain.ru).
+                       Должна резолвиться на LTE (поэтому свой домен, не keenetic.link/pro и другие).
+   {{KEENDNS_NAME}}  — KeenDNS-имя роутера = один в один сертификат в веб-морде роутера - Доменное имя
+                       (пример: home.keenetic.pro). Взять точно из роутера:
+                       SSH `show ipsec` → строка  local: [<имя>] ... cert: "CN=<имя>".
+                       ⚠️ ошибка: если не совпадёт — no matching peer config found.
+   {{VPN_USER}}      — учётка роутера с доступом к IKEv2 (пример: vpnuser).
+   {{VPN_PASS}}      — её пароль (пример: vpnpass). Можно УДАЛИТЬ строку AuthPassword целиком —
+                       тогда iOS спросит пароль один раз при подключении.
+   {{HOME_SSID_1/2}} — имена домашнего Wi-Fi, где VPN должен быть ВЫКЛ (пример: HomeWiFi_2G).
+   PayloadUUID (×2)  — сгенерируйте свои:  uuidgen  (в macOS/Linux). Два разных значения.
+   PayloadIdentifier — свой обратный домен (пример: ru.<Ваш_домен>.vpn.home).
+  ============================================================================
+  КЛЮЧЕВЫЕ ПРАВИЛА:
+   - RemoteAddress = {{DDNS_HOST}}      = резолвится на LTE (обходит SERVFAIL по keenetic.link/pro).
+   - RemoteIdentifier = {{KEENDNS_NAME}} = только сравнение строки, БЕЗ DNS-запроса.
+   - Аутентификация сервера = сертификат (доверие авто при Let's Encrypt, иначе добавить CA-блок).
+   - Аутентификация клиента = EAP логин/пароль (по умолчанию у IKEv2 Keenetic/Netcraze).
+   - OnDemand: дома ({{HOME_SSID_1/2}}) VPN ВЫКЛ, на любом другом Wi-Fi или Cellular (Сотовая связь) — ВКЛ.
+   - Full-tunnel (весь трафик) задаётся traffic-selectors сервера Keenetic/Netcraze
+     (NAT для клиентов ВКЛ). При необходимости можно добавить IncludeAllNetworks=true.
+  После правки проверить:  plutil -lint <этот_файл>
+  Установка: отправить файл на iPhone (AirDrop/почта/мессенджер) → Настройки → Профиль загружен → Установить.
+  ============================================================================
+-->
+<plist version="1.0">
+<dict>
+    <key>PayloadDisplayName</key>
+    <string>{{Home (Keenetic) IKEv2}}</string>
+    <key>PayloadIdentifier</key>
+    <string>{{ru.<Ваш_домен>.vpn.home}}</string>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>{{PayloadUUID-1}}</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+    <key>PayloadRemovalDisallowed</key>
+    <false/>
+    <key>PayloadContent</key>
+    <array>
+        <dict>
+            <key>PayloadDisplayName</key>
+            <string>{{Home (Keenetic) IKEv2}}</string>
+            <key>PayloadIdentifier</key>
+            <string>{{ru.<Ваш_домен>.vpn.home}}</string>
+            <key>PayloadType</key>
+            <string>com.apple.vpn.managed</string>
+            <key>PayloadUUID</key>
+            <string>{{PayloadUUID-1}}</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>UserDefinedName</key>
+            <string>{{Home (Keenetic)}}</string>
+            <key>VPNType</key>
+            <string>IKEv2</string>
+            <key>VPNSubType</key>
+            <string></string>
+            <key>IKEv2</key>
+            <dict>
+                <key>RemoteAddress</key>
+                <string>{{DDNS_HOST}}</string>
+                <key>RemoteIdentifier</key>
+                <string>{{KEENDNS_NAME}}</string>
+                <key>LocalIdentifier</key>
+                <string>{{VPN_USER}}</string>
+                <key>AuthenticationMethod</key>
+                <string>None</string>
+                <key>ExtendedAuthEnabled</key>
+                <integer>1</integer>
+                <key>AuthName</key>
+                <string>{{VPN_USER}}</string>
+                <key>AuthPassword</key>
+                <string>{{VPN_PASS}}</string>
+                <key>ServerCertificateIssuerCommonName</key>
+                <string></string>
+                <key>DeadPeerDetectionRate</key>
+                <string>Medium</string>
+                <key>DisableMOBIKE</key>
+                <integer>0</integer>
+                <key>DisableRedirect</key>
+                <integer>0</integer>
+                <key>EnableCertificateRevocationCheck</key>
+                <integer>0</integer>
+                <key>EnablePFS</key>
+                <integer>0</integer>
+                <key>IKESecurityAssociationParameters</key>
+                <dict>
+                    <key>EncryptionAlgorithm</key>
+                    <string>AES-256</string>
+                    <key>IntegrityAlgorithm</key>
+                    <string>SHA2-256</string>
+                    <key>DiffieHellmanGroup</key>
+                    <integer>14</integer>
+                    <key>LifeTimeInMinutes</key>
+                    <integer>1440</integer>
+                </dict>
+                <key>ChildSecurityAssociationParameters</key>
+                <dict>
+                    <key>EncryptionAlgorithm</key>
+                    <string>AES-256</string>
+                    <key>IntegrityAlgorithm</key>
+                    <string>SHA2-256</string>
+                    <key>DiffieHellmanGroup</key>
+                    <integer>14</integer>
+                    <key>LifeTimeInMinutes</key>
+                    <integer>1440</integer>
+                </dict>
+            </dict>
+            <key>OnDemandEnabled</key>
+            <integer>1</integer>
+            <key>OnDemandRules</key>
+            <array>
+                <dict>
+                    <key>Action</key>
+                    <string>Disconnect</string>
+                    <key>InterfaceTypeMatch</key>
+                    <string>WiFi</string>
+                    <key>SSIDMatch</key>
+                    <array>
+                        <string>{{HOME_SSID_1}}</string>
+                        <string>{{HOME_SSID_2}}</string>
+                    </array>
+                </dict>
+                <dict>
+                    <key>Action</key>
+                    <string>Connect</string>
+                    <key>InterfaceTypeMatch</key>
+                    <string>WiFi</string>
+                </dict>
+                <dict>
+                    <key>Action</key>
+                    <string>Connect</string>
+                    <key>InterfaceTypeMatch</key>
+                    <string>Cellular</string>
+                </dict>
+                <dict>
+                    <key>Action</key>
+                    <string>Connect</string>
+                </dict>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>
